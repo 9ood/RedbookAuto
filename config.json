@@ -2,14 +2,14 @@
   "queue_dir": "queue",
   "log_dir": "logs",
   "status": {
-    "enabled": false,
-    "command": ["npx", "xhs-mcp", "status"]
+    "enabled": true,
+    "command": ["node", "xhs-mcp-fix/dist/xhs-mcp.js", "status", "--compact"]
   },
   "publish": {
     "mode": "command",
     "command": [
-      "npx",
-      "xhs-mcp",
+      "node",
+      "xhs-mcp-fix/dist/xhs-mcp.js",
       "publish",
       "--type",
       "image",

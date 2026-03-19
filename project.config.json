@@ -3,28 +3,44 @@
   "name": "小红书自动发布",
   "category": "内容类",
   "type": "queue-worker",
-  "status": "warning",
-  "summary": "从待发布队列取内容，自动执行发布，并归档成功或失败结果。",
-  "description": "这是一个队列发布项目。当前已经纳入系统总表，但因为还有明显的 macOS 历史依赖，暂时只展示，不先开放控制按钮。",
+  "status": "draft",
+  "summary": "从待发布队列里取一条内容，自动调用小红书发布工具，并归档结果。",
+  "description": "这是一个队列发布项目。现在已经接入 dashboard，可以做环境检查、真实运行和停止。第一次使用前，如果还没登录小红书，会自动拉起登录流程。",
   "path": "E:/Project/codex/RedbookAuto",
   "entry": "",
   "health": "",
   "integration": "project-config",
   "control": {
-    "enabled": false,
+    "enabled": true,
     "type": "queue-worker",
-    "actions": []
+    "actions": ["test", "run", "stop"],
+    "testCommand": {
+      "command": "powershell",
+      "args": ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", "scripts/test.ps1"]
+    },
+    "runCommand": {
+      "command": "powershell",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts/run.ps1"]
+    },
+    "stopCommand": {
+      "command": "powershell",
+      "args": ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", "scripts/stop.ps1"]
+    },
+    "processMatch": {
+      "name": "python.exe",
+      "commandLinePattern": "*RedbookAuto*publisher\\run_once.py*"
+    }
   },
   "paths": {
     "logs": "logs",
     "queue": "queue",
-    "resources": "resource"
+    "config": "config.json"
   },
   "timeline": [
     {
       "time": "今天",
-      "title": "纳入真实项目表",
-      "note": "已经识别为真实项目，下一步会做跨平台整理。"
+      "title": "接入真实控制层",
+      "note": "dashboard 现在可以检查环境、尝试发布和停止当前运行。"
     }
   ]
 }

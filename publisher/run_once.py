@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import fcntl
 import json
 import logging
 import os
@@ -14,9 +13,30 @@ from datetime import datetime
 from pathlib import Path
 from typing import Iterable, List, Optional
 
+try:
+    import fcntl  # type: ignore
+except ImportError:
+    fcntl = None
+
+try:
+    import msvcrt  # type: ignore
+except ImportError:
+    msvcrt = None
+
 
 ROOT = Path(__file__).resolve().parents[1]
 IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+AUTH_STATUS_MARKERS = (
+    '"loggedIn": false',
+    '"status": "logged_out"',
+    '"status":"logged_out"',
+    'not logged in',
+    'login required',
+)
+
+
+class RecoverablePublishError(RuntimeError):
+    pass
 
 
 def load_config() -> dict:
@@ -49,11 +69,40 @@ def setup_logging(log_dir: Path) -> logging.Logger:
 def acquire_lock(lock_path: Path, logger: logging.Logger) -> Optional[object]:
     lock_file = lock_path.open("w")
     try:
-        fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except BlockingIOError:
+        if os.name == "nt":
+            if not msvcrt:
+                raise RuntimeError("msvcrt is required on Windows")
+            lock_file.write("0")
+            lock_file.flush()
+            lock_file.seek(0)
+            msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            if not fcntl:
+                raise RuntimeError("fcntl is required on POSIX")
+            fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except (BlockingIOError, OSError):
         logger.info("Another run is in progress; exiting.")
+        lock_file.close()
         return None
     return lock_file
+
+
+def release_lock(lock_file: Optional[object]) -> None:
+    if not lock_file:
+        return
+
+    try:
+        if os.name == "nt":
+            if msvcrt:
+                lock_file.seek(0)
+                msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            if fcntl:
+                fcntl.flock(lock_file, fcntl.LOCK_UN)
+    except OSError:
+        pass
+    finally:
+        lock_file.close()
 
 
 def find_next_item(pending_dir: Path) -> Optional[Path]:
@@ -134,6 +183,14 @@ def run_command(cmd: List[str], cwd: Path, logger: logging.Logger) -> subprocess
     )
 
 
+def is_logged_in(result: subprocess.CompletedProcess) -> bool:
+    text = "\n".join(
+        part for part in [result.stdout or "", result.stderr or ""] if part
+    ).lower()
+
+    return not any(marker.lower() in text for marker in AUTH_STATUS_MARKERS)
+
+
 def write_json(path: Path, data: dict) -> None:
     with path.open("w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
@@ -192,6 +249,10 @@ def main() -> int:
                 raise RuntimeError(
                     f"status check failed: {result.stderr.strip() or result.stdout.strip()}"
                 )
+            if not is_logged_in(result):
+                raise RecoverablePublishError(
+                    "XiaoHongShu login is required. Please run the login flow first."
+                )
 
         publish_cfg = config.get("publish", {})
         template = publish_cfg.get("command")
@@ -224,6 +285,17 @@ def main() -> int:
         )
         logger.info("Published: %s", target.name)
         return 0
+    except RecoverablePublishError as exc:
+        logger.warning("Recoverable issue: %s", exc)
+        write_json(
+            item_dir / "error.json",
+            {
+                "failed_at": datetime.now().isoformat(timespec="seconds"),
+                "error": str(exc),
+                "recoverable": True,
+            },
+        )
+        return 2
     except Exception as exc:
         logger.error("Failed: %s", exc)
         target = failed_dir / item_dir.name
@@ -237,6 +309,8 @@ def main() -> int:
             },
         )
         return 1
+    finally:
+        release_lock(lock)
 
 
 if __name__ == "__main__":
