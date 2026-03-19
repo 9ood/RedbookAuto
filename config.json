@@ -1,0 +1,25 @@
+{
+  "queue_dir": "queue",
+  "log_dir": "logs",
+  "status": {
+    "enabled": false,
+    "command": ["npx", "xhs-mcp", "status"]
+  },
+  "publish": {
+    "mode": "command",
+    "command": [
+      "npx",
+      "xhs-mcp",
+      "publish",
+      "--type",
+      "image",
+      "--title",
+      "{title}",
+      "--content",
+      "{content}",
+      "-m",
+      "{images_csv}",
+      "--tags={tags?}"
+    ]
+  }
+}

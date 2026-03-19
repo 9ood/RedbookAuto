@@ -1,0 +1,30 @@
+{
+  "id": "redbook-auto",
+  "name": "小红书自动发布",
+  "category": "内容类",
+  "type": "queue-worker",
+  "status": "warning",
+  "summary": "从待发布队列取内容，自动执行发布，并归档成功或失败结果。",
+  "description": "这是一个队列发布项目。当前已经纳入系统总表，但因为还有明显的 macOS 历史依赖，暂时只展示，不先开放控制按钮。",
+  "path": "E:/Project/codex/RedbookAuto",
+  "entry": "",
+  "health": "",
+  "integration": "project-config",
+  "control": {
+    "enabled": false,
+    "type": "queue-worker",
+    "actions": []
+  },
+  "paths": {
+    "logs": "logs",
+    "queue": "queue",
+    "resources": "resource"
+  },
+  "timeline": [
+    {
+      "time": "今天",
+      "title": "纳入真实项目表",
+      "note": "已经识别为真实项目，下一步会做跨平台整理。"
+    }
+  ]
+}

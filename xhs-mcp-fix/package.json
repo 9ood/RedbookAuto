@@ -1,0 +1,85 @@
+{
+  "name": "xhs-mcp",
+  "version": "0.8.7",
+  "description": "XiaoHongShu CLI and MCP Server",
+  "main": "dist/xhs-mcp.js",
+  "types": "dist/xhs-mcp.d.ts",
+  "bin": {
+    "xhs-mcp": "dist/xhs-mcp.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "docs"
+  ],
+  "scripts": {
+    "build": "npm run clean && npm run build:types && npm run build:webpack && chmod +x dist/xhs-mcp.js",
+    "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist --project config/tsconfig.json",
+    "build:webpack": "webpack --mode=production --config config/webpack.config.js",
+    "clean": "rm -rf dist temp_images/*",
+    "dev": "tsx src/cli/cli.ts",
+    "lint": "eslint src/**/*.ts --config config/eslint.config.js",
+    "lint:fix": "eslint src/**/*.ts --fix --config config/eslint.config.js",
+    "format": "prettier --write src/**/*.ts",
+    "format:check": "prettier --check src/**/*.ts",
+    "test": "node tests/integration/image-downloader.test.js && node tests/integration/title-validation.test.js",
+    "validate": "node scripts/cli-validation.js",
+    "prepublishOnly": "npm run build && npm run lint && npm run format:check",
+    "prepack": "npm run build",
+    "version": "npm run build",
+    "postversion": "git push && git push --tags"
+  },
+  "keywords": [
+    "xiaohongshu",
+    "xhs",
+    "mcp",
+    "model-context-protocol",
+    "automation",
+    "puppeteer",
+    "cli",
+    "social-media",
+    "content-publishing",
+    "web-automation",
+    "typescript"
+  ],
+  "author": "Algovate",
+  "license": "MIT",
+  "homepage": "https://github.com/algovate/xhs-mcp#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/algovate/xhs-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/algovate/xhs-mcp/issues"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "commander": "^12.0.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "node-fetch": "^3.3.2",
+    "puppeteer": "^22.0.0",
+    "string-width": "^8.1.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.28.4",
+    "@babel/preset-env": "^7.28.3",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "babel-loader": "^10.0.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0",
+    "terser-webpack-plugin": "^5.3.14",
+    "ts-loader": "^9.5.4",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "webpack": "^5.101.3",
+    "webpack-cli": "^6.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
